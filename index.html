@@ -1,0 +1,604 @@
+<html><head><base href="https://websimengine.com/email-manager-v13/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Direcciones de Correo</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+<style>
+  :root {
+    --primary-color: #4a90e2;
+    --secondary-color: #f39c12;
+    --background-color: #f0f4f8;
+    --text-color: #333;
+    --border-color: #ddd;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  }
+  h1, h2 {
+    color: var(--primary-color);
+    text-align: center;
+  }
+  .upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 30px;
+    transition: all 0.3s ease;
+  }
+  .upload-area:hover {
+    background-color: #f9f9f9;
+  }
+  #fileInput {
+    display: none;
+  }
+  .btn {
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  .btn i {
+    margin-right: 8px;
+  }
+  .btn:hover {
+    background-color: #3a7bc8;
+  }
+  .btn-secondary {
+    background-color: var(--secondary-color);
+  }
+  .btn-secondary:hover {
+    background-color: #e67e22;
+  }
+  textarea, select, input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 14px;
+  }
+  #emailList, #selectedEmails {
+    height: 150px;
+  }
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+  }
+  .modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 10px;
+  }
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .close:hover,
+  .close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .button-group {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .email-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+  .email-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  .email-item input[type="checkbox"] {
+    margin-right: 10px;
+  }
+  .stats {
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+  }
+  .filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .filter-options > * {
+    flex: 1;
+  }
+  .section-icon {
+    margin-right: 10px;
+    color: var(--primary-color);
+  }
+  .filter-toggle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+  .filter-toggle label {
+    margin: 0 10px;
+    cursor: pointer;
+  }
+  .category-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .category-filter select {
+    width: calc(50% - 5px);
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 14px;
+    background-color: white;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-envelope section-icon"></i>Gestión de Direcciones de Correo</h1>
+    <div class="upload-area" id="dropZone">
+      <p><i class="fas fa-file-upload section-icon"></i>Arrastra y suelta archivos aquí, pega el contenido o haz clic para seleccionar</p>
+      <input type="file" id="fileInput" multiple accept=".doc,.docx,.txt,.csv,.xls,.xlsx">
+      <button class="btn" onclick="document.getElementById('fileInput').click()"><i class="fas fa-folder-open"></i>Seleccionar archivos</button>
+    </div>
+    <textarea id="pasteArea" placeholder="O pega el contenido aquí"></textarea>
+    <button class="btn" onclick="processPastedContent()"><i class="fas fa-paste"></i>Procesar contenido pegado</button>
+    <h2><i class="fas fa-list section-icon"></i>Correos extraídos:</h2>
+    <textarea id="emailList" readonly></textarea>
+    <div class="button-group">
+      <button class="btn btn-secondary" onclick="copyToClipboard('emailList')"><i class="fas fa-copy"></i>Copiar al portapapeles</button>
+    </div>
+    <h2><i class="fas fa-filter section-icon"></i>Filtrar y buscar:</h2>
+    <div class="filter-toggle">
+      <label>
+        <input type="radio" name="filterType" value="withFilter" checked onchange="toggleFilterOptions()"> Con filtro
+      </label>
+      <label>
+        <input type="radio" name="filterType" value="withoutFilter" onchange="toggleFilterOptions()"> Sin filtro
+      </label>
+    </div>
+    <div id="filterOptionsContainer">
+      <div class="category-filter" id="categoryFilter">
+        <!-- Las categorías se generarán aquí dinámicamente como listas desplegables -->
+      </div>
+      <input type="text" id="searchKeyword" placeholder="Buscar palabra clave">
+      <button class="btn" onclick="applyFilters()"><i class="fas fa-search"></i>Aplicar filtros</button>
+    </div>
+    <h2><i class="fas fa-check-square section-icon"></i>Correos seleccionados:</h2>
+    <div class="stats" id="emailStats"></div>
+    <div class="button-group">
+      <button class="btn btn-secondary" onclick="toggleAllEmails(true)"><i class="fas fa-check-double"></i>Seleccionar todos</button>
+      <button class="btn btn-secondary" onclick="toggleAllEmails(false)"><i class="fas fa-times-circle"></i>Deseleccionar todos</button>
+      <button class="btn btn-secondary" onclick="resetSelection()"><i class="fas fa-undo"></i>Resetear selección</button>
+      <button class="btn btn-secondary" onclick="deleteFilteredElements()"><i class="fas fa-trash-alt"></i>Borrar elementos filtrados</button>
+    </div>
+    <div class="email-list" id="emailCheckList"></div>
+    <textarea id="selectedEmails" readonly></textarea>
+    <div class="button-group">
+      <button class="btn" onclick="showConfirmationModal()"><i class="fas fa-paper-plane"></i>Enviar correo</button>
+      <button class="btn btn-secondary" onclick="resetForm()"><i class="fas fa-trash-alt"></i>Limpiar todo</button>
+      <button class="btn btn-secondary" onclick="showSaveListModal()"><i class="fas fa-save"></i>Guardar selección</button>
+      <button class="btn btn-secondary" onclick="copyToClipboard('selectedEmails')"><i class="fas fa-copy"></i>Copiar al portapapeles</button>
+    </div>
+  </div>
+
+  <div id="confirmationModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2><i class="fas fa-envelope-open-text"></i> Confirmar destinatarios</h2>
+      <p>¿Estás seguro de que deseas enviar un correo a los siguientes destinatarios?</p>
+      <textarea id="confirmEmails" readonly style="height: 100px;"></textarea>
+      <button class="btn" onclick="sendEmail()"><i class="fas fa-check"></i>Confirmar y enviar</button>
+    </div>
+  </div>
+
+  <div id="saveListModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2><i class="fas fa-save"></i> Guardar lista de correos</h2>
+      <p>Por favor, ingresa un nombre para la lista de correos:</p>
+      <input type="text" id="listName" placeholder="Nombre de la lista">
+      <button class="btn" onclick="saveListToTxt()"><i class="fas fa-file-download"></i>Guardar</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.19/mammoth.browser.min.js"></script>
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const emailList = document.getElementById('emailList');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const selectedEmails = document.getElementById('selectedEmails');
+    const emailCheckList = document.getElementById('emailCheckList');
+    const emailStats = document.getElementById('emailStats');
+    const confirmationModal = document.getElementById('confirmationModal');
+    const saveListModal = document.getElementById('saveListModal');
+    const confirmEmails = document.getElementById('confirmEmails');
+    const pasteArea = document.getElementById('pasteArea');
+    const filterOptionsContainer = document.getElementById('filterOptionsContainer');
+
+    let emails = [];
+    let headers = [];
+    let isFilterEnabled = true;
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.style.backgroundColor = '#e9e9e9';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.backgroundColor = '';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.backgroundColor = '';
+      handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    function handleFiles(files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const extension = file.name.split('.').pop().toLowerCase();
+          switch (extension) {
+            case 'doc':
+            case 'docx':
+              processWordDocument(e.target.result);
+              break;
+            case 'txt':
+              processTxtFile(e.target.result);
+              break;
+            case 'csv':
+              processCsvFile(e.target.result);
+              break;
+            case 'xls':
+            case 'xlsx':
+              processExcelFile(e.target.result);
+              break;
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function processPastedContent() {
+      const content = pasteArea.value;
+      if (content.trim()) {
+        processTextWithHeaders(content);
+        pasteArea.value = '';
+      }
+    }
+
+    function processWordDocument(arrayBuffer) {
+      mammoth.extractRawText({ arrayBuffer: arrayBuffer })
+        .then(result => {
+          const text = result.value;
+          processTextWithHeaders(text);
+        });
+    }
+
+    function processTxtFile(arrayBuffer) {
+      const text = new TextDecoder().decode(arrayBuffer);
+      processTextWithHeaders(text);
+    }
+
+    function processCsvFile(arrayBuffer) {
+      const text = new TextDecoder().decode(arrayBuffer);
+      const rows = text.split('\n');
+      headers = rows[0].split(',').map(header => header.trim());
+      
+      for (let i = 1; i < rows.length; i++) {
+        const columns = rows[i].split(',');
+        if (columns.length === headers.length) {
+          const emailData = {};
+          headers.forEach((header, index) => {
+            emailData[header] = columns[index].trim();
+          });
+          addEmailWithHeaders(emailData);
+        }
+      }
+      updateUI();
+    }
+
+    function processExcelFile(arrayBuffer) {
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      
+      headers = data[0];
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        if (row.length === headers.length) {
+          const emailData = {};
+          headers.forEach((header, index) => {
+            emailData[header] = row[index];
+          });
+          addEmailWithHeaders(emailData);
+        }
+      }
+      updateUI();
+    }
+
+    function processTextWithHeaders(text) {
+      const lines = text.split('\n');
+      headers = lines[0].split('\t').map(header => header.trim());
+      
+      for (let i = 1; i < lines.length; i++) {
+        const columns = lines[i].split('\t');
+        if (columns.length === headers.length) {
+          const emailData = {};
+          headers.forEach((header, index) => {
+            emailData[header] = columns[index].trim();
+          });
+          addEmailWithHeaders(emailData);
+        }
+      }
+      updateUI();
+    }
+
+    function addEmailWithHeaders(emailData) {
+      const emailKey = Object.keys(emailData).find(key => isValidEmail(emailData[key]));
+      if (emailKey) {
+        const email = emailData[emailKey];
+        emails.push({ ...emailData, email, selected: true });
+      }
+    }
+
+    function isValidEmail(email) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      return emailRegex.test(email);
+    }
+
+    function updateUI() {
+      emails.sort((a, b) => a.email.localeCompare(b.email));
+      emailList.value = emails.map(e => e.email).join('\n');
+      updateCategoryFilter();
+      updateSelectedEmails();
+      updateEmailCheckList();
+      updateEmailStats();
+    }
+
+    function updateCategoryFilter() {
+      categoryFilter.innerHTML = '';
+      headers.forEach(header => {
+        const uniqueValues = [...new Set(emails.map(e => e[header]))];
+        const select = document.createElement('select');
+        select.name = header;
+        select.innerHTML = `
+          <option value="">Todos - ${header}</option>
+          ${uniqueValues.map(value => `<option value="${value}">${value}</option>`).join('')}
+        `;
+        categoryFilter.appendChild(select);
+      });
+    }
+
+    function updateSelectedEmails() {
+      const filteredEmails = getFilteredEmails();
+      selectedEmails.value = filteredEmails.filter(e => e.selected).map(e => e.email).join('; ');
+    }
+
+    function updateEmailCheckList() {
+      const filteredEmails = getFilteredEmails();
+      
+      emailCheckList.innerHTML = filteredEmails.map((e, index) => `
+        <div class="email-item">
+          <input type="checkbox" id="email-${index}" ${e.selected ? 'checked' : ''} onchange="toggleEmail(${index})">
+          <label for="email-${index}">${e.email}</label>
+        </div>
+      `).join('');
+    }
+
+    function toggleEmail(index) {
+      const filteredEmails = getFilteredEmails();
+      filteredEmails[index].selected = !filteredEmails[index].selected;
+      updateSelectedEmails();
+      updateEmailStats();
+    }
+
+    function toggleAllEmails(selectAll) {
+      const filteredEmails = getFilteredEmails();
+      filteredEmails.forEach(e => e.selected = selectAll);
+      updateSelectedEmails();
+      updateEmailCheckList();
+      updateEmailStats();
+    }
+
+    function resetSelection() {
+      emails.forEach(e => e.selected = true);
+      updateSelectedEmails();
+      updateEmailCheckList();
+      updateEmailStats();
+    }
+
+    function deleteFilteredElements() {
+      const filteredEmails = getFilteredEmails();
+      emails = emails.filter(email => !filteredEmails.includes(email));
+      updateUI();
+    }
+
+    function updateEmailStats() {
+      const totalEmails = emails.length;
+      const filteredEmails = getFilteredEmails();
+      const filteredCount = filteredEmails.length;
+      const selectedEmails = filteredEmails.filter(e => e.selected).length;
+      const invalidEmails = emails.filter(e => !isValidEmail(e.email)).length;
+
+      emailStats.innerHTML = `
+        <strong>Total de correos extraídos:</strong> ${totalEmails}<br>
+        <strong>Correos filtrados:</strong> ${filteredCount}<br>
+        <strong>Correos seleccionados:</strong> ${selectedEmails}<br>
+        <strong>Correos inválidos:</strong> ${invalidEmails}
+      `;
+    }
+
+    function getFilteredEmails() {
+      if (!isFilterEnabled) {
+        return emails;
+      }
+
+      const selectedCategories = {};
+      headers.forEach(header => {
+        const select = document.querySelector(`select[name="${header}"]`);
+        selectedCategories[header] = select.value;
+      });
+
+      const keyword = document.getElementById('searchKeyword')?.value.toLowerCase();
+
+      return emails.filter(e => {
+        const categoryMatch = Object.entries(selectedCategories).every(([header, value]) => 
+          value === '' || e[header] === value
+        );
+        const keywordMatch = keyword ? Object.values(e).some(v => v.toString().toLowerCase().includes(keyword)) : true;
+        return categoryMatch && keywordMatch;
+      });
+    }
+
+    function applyFilters() {
+      updateSelectedEmails();
+      updateEmailCheckList();
+      updateEmailStats();
+    }
+
+    function showConfirmationModal() {
+      confirmEmails.value = selectedEmails.value;
+      confirmationModal.style.display = "block";
+    }
+
+    function showSaveListModal() {
+      saveListModal.style.display = "block";
+    }
+
+    function sendEmail() {
+      const recipients = selectedEmails.value.split(';').map(email => email.trim()).filter(email => email);
+      const chunkSize = 50; // Ajusta este número según sea necesario
+      const chunks = [];
+
+      for (let i = 0; i < recipients.length; i += chunkSize) {
+        chunks.push(recipients.slice(i, i + chunkSize));
+      }
+
+      chunks.forEach((chunk, index) => {
+        setTimeout(() => {
+          const mailtoLink = `mailto:${chunk.join(',')}`;
+          window.open(mailtoLink, '_blank');
+        }, index * 1000); // Espera 1 segundo entre cada apertura
+      });
+
+      confirmationModal.style.display = "none";
+    }
+
+    function resetForm() {
+      emails = [];
+      headers = [];
+      emailList.value = '';
+      selectedEmails.value = '';
+      categoryFilter.innerHTML = '';
+      emailCheckList.innerHTML = '';
+      emailStats.innerHTML = '';
+      fileInput.value = '';
+      pasteArea.value = '';
+    }
+
+    function saveListToTxt() {
+      const listName = document.getElementById('listName').value || 'lista_correos';
+      const content = selectedEmails.value;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${listName}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      saveListModal.style.display = "none";
+    }
+
+    function copyToClipboard(elementId) {
+      const element = document.getElementById(elementId);
+      element.select();
+      document.execCommand('copy');
+      alert('Contenido copiado al portapapeles');
+    }
+
+    function toggleFilterOptions() {
+      isFilterEnabled = document.querySelector('input[name="filterType"]:checked').value === 'withFilter';
+      filterOptionsContainer.style.display = isFilterEnabled ? 'block' : 'none';
+      updateSelectedEmails();
+      updateEmailCheckList();
+      updateEmailStats();
+    }
+
+    // Cerrar modales
+    window.onclick = function(event) {
+      if (event.target == confirmationModal) {
+        confirmationModal.style.display = "none";
+      }
+      if (event.target == saveListModal) {
+        saveListModal.style.display = "none";
+      }
+    }
+
+    const closeBtns = document.getElementsByClassName("close");
+    for (let i = 0; i < closeBtns.length; i++) {
+      closeBtns[i].onclick = function() {
+        this.parentElement.parentElement.style.display = "none";
+      }
+    }
+  </script>
+</body>
+</html>
